@@ -62,5 +62,43 @@ class TeHelper
 
     }
 
+    public function testWillExpireAt()
+    {
+        // Test with due time less than 90 hours from created_at
+        $dueTime = Carbon::now()->addHours(80);
+        $createdAt = Carbon::now();
+        $result = TeHelper::willExpireAt($dueTime, $createdAt);
+        $this->assertEquals($dueTime, $result);
+
+        // Test with due time more than 24 but less than 72 hours from created_at
+        $dueTime = Carbon::now()->addHours(50);
+        $createdAt = Carbon::now();
+        $expected = $createdAt->copy()->addHours(16);
+        $result = TeHelper::willExpireAt($dueTime, $createdAt);
+        $this->assertEquals($expected, $result);
+
+        // Test with due time more than 72 hours from created_at
+        $dueTime = Carbon::now()->addHours(100);
+        $createdAt = Carbon::now();
+        $expected = $dueTime->copy()->subHours(48);
+        $result = TeHelper::willExpireAt($dueTime, $createdAt);
+        $this->assertEquals($expected, $result);
+
+        // Test edge case exactly at 72 hours
+        $dueTime = Carbon::now()->addHours(72);
+        $createdAt = Carbon::now();
+        $expected = $createdAt->copy()->addHours(16);
+        $result = TeHelper::willExpireAt($dueTime, $createdAt);
+        $this->assertEquals($expected, $result);
+
+        // Test edge case exactly at 24 hours
+        $dueTime = Carbon::now()->addHours(24);
+        $createdAt = Carbon::now();
+        $expected = $createdAt->copy()->addHours(16);
+        $result = TeHelper::willExpireAt($dueTime, $createdAt);
+        $this->assertEquals($expected, $result);
+    }
+
+
 }
 

@@ -7,6 +7,7 @@ use DTApi\Http\Requests;
 use DTApi\Models\Distance;
 use Illuminate\Http\Request;
 use DTApi\Repository\BookingRepository;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Class BookingController
@@ -35,17 +36,48 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
-
-            $response = $this->repository->getUsersJobs($user_id);
-
-        }
-        elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
-        {
-            $response = $this->repository->getAll($request);
+        if ($userId = $request->get('user_id')) {
+            $response = $this->handleUserJobs($userId);
+        } elseif ($this->isAdmin($request->__authenticatedUser)) {
+            $response = $this->handleAdminJobs($request);
+        } else {
+            // Default response or error handling
         }
 
         return response($response);
+    }
+
+    /**
+     * Handle jobs for a specific user.
+     *
+     * @param int $userId
+     * @return mixed
+     */
+    private function handleUserJobs($userId)
+    {
+        return $this->repository->getUsersJobs($userId);
+    }
+
+    /**
+     * Handle jobs for an admin user.
+     *
+     * @param Request $request
+     * @return mixed
+     */
+    private function handleAdminJobs(Request $request)
+    {
+        return $this->repository->getAll($request);
+    }
+
+    /**
+     * Check if user is an admin.
+     *
+     * @param $user
+     * @return bool
+     */
+    private function isAdmin($user)
+    {
+        return in_array($user->user_type, [env('ADMIN_ROLE_ID'), env('SUPERADMIN_ROLE_ID')]);
     }
 
     /**
@@ -65,12 +97,43 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->all();
+        $this->validateStoreRequest($request);
 
-        $response = $this->repository->store($request->__authenticatedUser, $data);
+        $response = $this->repository->store($request->__authenticatedUser, $request->all());
 
         return response($response);
+    }
 
+    /**
+     * Validate the request for storing a booking.
+     *
+     * @param Request $request
+     */
+    private function validateUpdateRequest(Request $request)
+    {
+        // Define validation rules
+        $rules = [
+            'booking_date' => 'required|date',
+            'start_time'   => 'required|date_format:H:i',
+            'end_time'     => 'required|date_format:H:i|after:start_time',
+        ];
+
+        // Define custom error messages (optional)
+        $messages = [
+            'booking_date.required' => 'The booking date is required.',
+            'start_time.required'   => 'The start time is required.',
+            'end_time.required'     => 'The end time is required.',
+            'end_time.after'        => 'The end time must be after the start time.',
+        ];
+
+        // Perform the validation
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            // Handle validation failure, e.g., throw an exception or return an error response
+            throw new \Illuminate\Validation\ValidationException($validator);
+        }
     }
 
     /**
@@ -80,11 +143,33 @@ class BookingController extends Controller
      */
     public function update($id, Request $request)
     {
-        $data = $request->all();
-        $cuser = $request->__authenticatedUser;
-        $response = $this->repository->updateJob($id, array_except($data, ['_token', 'submit']), $cuser);
+        $this->validateUpdateRequest($request);
+        $data = $this->prepareUpdateData($request);
+
+        $response = $this->repository->updateJob($id, $data, $request->__authenticatedUser);
 
         return response($response);
+    }
+
+    /**
+     * Validate the request for updating a booking.
+     *
+     * @param Request $request
+     */
+    private function validateUpdateRequest(Request $request)
+    {
+        // Add your validation logic here
+    }
+
+    /**
+     * Prepare data for updating a booking.
+     *
+     * @param Request $request
+     * @return array
+     */
+    private function prepareUpdateData(Request $request)
+    {
+        return array_except($request->all(), ['_token', 'submit']);
     }
 
     /**

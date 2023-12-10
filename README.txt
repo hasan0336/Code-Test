@@ -43,3 +43,9 @@ OR
 Thank you!
 
 
+My Thoughts:
+
+When I go though the code I find out it's a good core if a junior developer have wrote it, but if it was written by a senior developer than I feel its a poor code.
+Change I did is to make this code more reusable and I add extra validation rules in post requests.
+
+Overall its a very lengthy challenge and had to go through alot of lines to make the changes.

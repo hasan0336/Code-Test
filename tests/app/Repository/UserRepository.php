@@ -28,6 +28,7 @@ class UserRepository extends BaseRepository
     protected $model;
     protected $logger;
 
+    protected $userRepository;
     /**
      * @param User $model
      */
@@ -40,6 +41,9 @@ class UserRepository extends BaseRepository
         $this->logger->pushHandler(new StreamHandler(storage_path('logs/admin/laravel-' . date('Y-m-d') . '.log'), Logger::DEBUG));
         $this->logger->pushHandler(new FirePHPHandler());
     }
+
+   
+
 
     public function createOrUpdate($id = null, $request)
     { 
@@ -230,6 +234,111 @@ class UserRepository extends BaseRepository
     public function getTranslators()
     {
         return User::where('user_type', 2)->get();
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->userRepository = new UserRepository(new User());
+    }
+
+    public function testCreateNewUser()
+    {
+        $userData = [
+            'role' => 'some_role', // Role of the user (e.g., 'admin', 'translator', 'customer')
+            'name' => 'Updated User', // Name of the user
+            'email' => 'user@example.com', // Email of the user
+            'password' => 'user_password', // Password for the user account
+            'dob_or_orgid' => '1990-01-01', // Date of birth or organization ID
+            'phone' => '1234567890', // Phone number
+            'mobile' => '0987654321', // Mobile number
+            'company_id' => '1', // Company ID if applicable
+            'department_id' => '1', // Department ID if applicable
+            'consumer_type' => 'paid', // Consumer type (e.g., 'paid', 'unpaid')
+            'customer_type' => 'individual', // Customer type (e.g., 'individual', 'business')
+            'username' => 'user123', // Username for the user
+            'post_code' => '12345', // Postal code
+            'address' => '123 Main St', // Address
+            'city' => 'Anytown', // City
+            'town' => 'Downtown', // Town
+            'country' => 'Countryland', // Country
+            'reference' => 'yes', // Reference field
+            'additional_info' => 'Additional information', // Additional information
+            'cost_place' => 'Cost Place', // Cost place field
+            'fee' => '100', // Fee amount
+            'time_to_charge' => '30', // Time to charge
+            'time_to_pay' => '15', // Time to pay
+            'charge_ob' => 'charge_ob_value', // Charge OB field
+            'customer_id' => '123', // Customer ID
+            'charge_km' => '10', // Charge per km
+            'maximum_km' => '50', // Maximum km
+            'translator_type' => 'professional', // Translator type
+            'worked_for' => 'yes', // Worked for field
+            'organization_number' => '123456', // Organization number
+            'gender' => 'male', // Gender
+            'translator_level' => 'advanced', // Translator level
+            'user_language' => ['English', 'Spanish'], // User languages
+            'user_towns_projects' => ['Town1', 'Town2'], // User towns projects
+            'translator_ex' => ['Translator1', 'Translator2'], // Translator exclusions
+            'status' => '1', // Status
+            // ... and any other fields specific to your application's logic
+        ];
+        
+
+        $this->mockUser->method('findOrFail')->will($this->throwException(new ModelNotFoundException));
+        $this->mockUser->expects($this->once())->method('create')->with($userData);
+
+        $this->userRepository->createOrUpdate(null, $userData);
+    }
+
+    public function testUpdateExistingUser()
+    {
+        $userData = [
+            'role' => 'some_role', // Role of the user (e.g., 'admin', 'translator', 'customer')
+            'name' => 'Updated User', // Name of the user
+            'email' => 'user@example.com', // Email of the user
+            'password' => 'user_password', // Password for the user account
+            'dob_or_orgid' => '1990-01-01', // Date of birth or organization ID
+            'phone' => '1234567890', // Phone number
+            'mobile' => '0987654321', // Mobile number
+            'company_id' => '1', // Company ID if applicable
+            'department_id' => '1', // Department ID if applicable
+            'consumer_type' => 'paid', // Consumer type (e.g., 'paid', 'unpaid')
+            'customer_type' => 'individual', // Customer type (e.g., 'individual', 'business')
+            'username' => 'user123', // Username for the user
+            'post_code' => '12345', // Postal code
+            'address' => '123 Main St', // Address
+            'city' => 'Anytown', // City
+            'town' => 'Downtown', // Town
+            'country' => 'Countryland', // Country
+            'reference' => 'yes', // Reference field
+            'additional_info' => 'Additional information', // Additional information
+            'cost_place' => 'Cost Place', // Cost place field
+            'fee' => '100', // Fee amount
+            'time_to_charge' => '30', // Time to charge
+            'time_to_pay' => '15', // Time to pay
+            'charge_ob' => 'charge_ob_value', // Charge OB field
+            'customer_id' => '123', // Customer ID
+            'charge_km' => '10', // Charge per km
+            'maximum_km' => '50', // Maximum km
+            'translator_type' => 'professional', // Translator type
+            'worked_for' => 'yes', // Worked for field
+            'organization_number' => '123456', // Organization number
+            'gender' => 'male', // Gender
+            'translator_level' => 'advanced', // Translator level
+            'user_language' => ['English', 'Spanish'], // User languages
+            'user_towns_projects' => ['Town1', 'Town2'], // User towns projects
+            'translator_ex' => ['Translator1', 'Translator2'], // Translator exclusions
+            'status' => '1', // Status
+            // ... and any other fields specific to your application's logic
+        ];
+        
+        $userId = 1;
+
+        $this->mockUser->method('findOrFail')->willReturn($this->mockUser);
+        $this->mockUser->expects($this->once())->method('update')->with($userData);
+
+        $this->userRepository->createOrUpdate($userId, $userData);
     }
     
 }
